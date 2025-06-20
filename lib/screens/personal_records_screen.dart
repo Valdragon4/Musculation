@@ -181,7 +181,7 @@ class PersonalRecordsScreen extends ConsumerWidget {
             ...record.sets.asMap().entries.map((entry) => _buildRecordInfo(
               context,
               'Série ${entry.key + 1}',
-              _setDescription(entry.value, exercise.type),
+              _setDescription(entry.value, exercise.type.name),
               Icons.fitness_center,
             )),
             const SizedBox(height: 8),
@@ -291,7 +291,7 @@ class PersonalRecordsScreen extends ConsumerWidget {
                     const SizedBox(height: 16),
                     if (selectedExercise != null)
                       _CompactSetInput(
-                        type: selectedExercise!.type,
+                        type: selectedExercise!.type.name,
                         onAdd: addSet,
                       ),
                     if (sets.isNotEmpty) ...[
@@ -299,7 +299,7 @@ class PersonalRecordsScreen extends ConsumerWidget {
                       Text('Séries ajoutées :', style: AppTextStyles.label(context)),
                       ...sets.asMap().entries.map((entry) => ListTile(
                         title: Text('Série ${entry.key + 1}'),
-                        subtitle: Text(_setDescription(entry.value, selectedExercise!.type)),
+                        subtitle: Text(_setDescription(entry.value, selectedExercise!.type.name)),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete),
                           onPressed: () => removeSet(entry.key),
@@ -578,13 +578,13 @@ class PersonalRecordsScreen extends ConsumerWidget {
     return '${date.day}/${date.month}/${date.year}';
   }
 
-  String _setDescription(WorkoutSet set, ExerciseType type) {
+  String _setDescription(WorkoutSet set, String type) {
     List<String> parts = [];
     if (set.notes != null && set.notes!.startsWith('pause:')) {
       parts.add(set.notes!);
       return parts.join(' | ');
     }
-    if (type == ExerciseType.hyrox) {
+    if (type == 'hyrox') {
       final already = <String, bool>{};
       if (set.rpe != 0) {
         parts.add('Distance: ${set.rpe} m');
@@ -609,7 +609,7 @@ class PersonalRecordsScreen extends ConsumerWidget {
         }
       }
       return parts.join(' |\n');
-    } else if (type == ExerciseType.cardio || type == ExerciseType.endurance) {
+    } else if (type == 'cardio' || type == 'endurance') {
       if (set.weight != 0) parts.add('Distance: ${set.weight} km');
       if (set.repetitions != 0) parts.add('Temps: ${set.repetitions} min');
       if (set.rpe != 0) parts.add('Vitesse: ${set.rpe} km/h');
@@ -626,7 +626,7 @@ class PersonalRecordsScreen extends ConsumerWidget {
 
 // Widget compact pour ajouter une série selon le type d'exercice
 class _CompactSetInput extends StatefulWidget {
-  final ExerciseType type;
+  final String type;
   final void Function(WorkoutSet) onAdd;
   const _CompactSetInput({required this.type, required this.onAdd});
   @override
@@ -646,10 +646,10 @@ class _CompactSetInputState extends State<_CompactSetInput> {
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> fields;
+    List<Widget> fields = [];
     switch (widget.type) {
-      case ExerciseType.force:
-      case ExerciseType.hypertrophie:
+      case 'force':
+      case 'hypertrophie':
         fields = [
           Row(children: [
             Expanded(child: TextField(controller: _repsController, decoration: const InputDecoration(labelText: 'Reps'), keyboardType: TextInputType.number)),
@@ -661,8 +661,8 @@ class _CompactSetInputState extends State<_CompactSetInput> {
           const SizedBox(height: 8),
           TextField(controller: _notesController, decoration: const InputDecoration(labelText: 'Notes (optionnel)')),
         ]; break;
-      case ExerciseType.cardio:
-      case ExerciseType.endurance:
+      case 'cardio':
+      case 'endurance':
         fields = [
           Row(children: [
             Expanded(child: TextField(controller: _distanceController, decoration: const InputDecoration(labelText: 'Distance (km)'), keyboardType: TextInputType.number)),
@@ -676,7 +676,7 @@ class _CompactSetInputState extends State<_CompactSetInput> {
           const SizedBox(height: 8),
           TextField(controller: _notesController, decoration: const InputDecoration(labelText: 'Notes (optionnel)')),
         ]; break;
-      case ExerciseType.hyrox:
+      case 'hyrox':
         fields = [
           Row(children: [
             Expanded(child: TextField(controller: _distanceController, decoration: const InputDecoration(labelText: 'Distance (m)'), keyboardType: TextInputType.number)),
@@ -692,7 +692,7 @@ class _CompactSetInputState extends State<_CompactSetInput> {
           const SizedBox(height: 8),
           TextField(controller: _notesController, decoration: const InputDecoration(labelText: 'Notes (optionnel)')),
         ]; break;
-      case ExerciseType.autre:
+      case 'autre':
         fields = [
           TextField(controller: _notesController, decoration: const InputDecoration(labelText: 'Notes')), 
         ]; break;
@@ -710,8 +710,8 @@ class _CompactSetInputState extends State<_CompactSetInput> {
                 label: const Text('Ajouter la série'),
                 onPressed: () {
                   switch (widget.type) {
-                    case ExerciseType.force:
-                    case ExerciseType.hypertrophie:
+                    case 'force':
+                    case 'hypertrophie':
                       if (_repsController.text.isEmpty || _weightController.text.isEmpty) return;
                       widget.onAdd(WorkoutSet(
                         repetitions: int.parse(_repsController.text),
@@ -721,8 +721,8 @@ class _CompactSetInputState extends State<_CompactSetInput> {
                       ));
                       _repsController.clear(); _weightController.clear(); _rpeController.clear(); _notesController.clear();
                       break;
-                    case ExerciseType.cardio:
-                    case ExerciseType.endurance:
+                    case 'cardio':
+                    case 'endurance':
                       if (_distanceController.text.isEmpty || _timeController.text.isEmpty) return;
                       String? notes;
                       List<String> notesParts = [];
@@ -737,7 +737,7 @@ class _CompactSetInputState extends State<_CompactSetInput> {
                       ));
                       _distanceController.clear(); _timeController.clear(); _speedController.clear(); _pauseController.clear(); _notesController.clear();
                       break;
-                    case ExerciseType.hyrox:
+                    case 'hyrox':
                       if (_distanceController.text.isEmpty && _timeController.text.isEmpty && _repsController.text.isEmpty && _chargeTextController.text.isEmpty && _pauseController.text.isEmpty && _notesController.text.isEmpty) return;
                       List<String> notesParts = [];
                       if (_timeController.text.isNotEmpty) notesParts.add('Temps: ${_timeController.text}s');
@@ -753,7 +753,7 @@ class _CompactSetInputState extends State<_CompactSetInput> {
                       ));
                       _distanceController.clear(); _timeController.clear(); _repsController.clear(); _chargeTextController.clear(); _pauseController.clear(); _notesController.clear();
                       break;
-                    case ExerciseType.autre:
+                    case 'autre':
                       widget.onAdd(WorkoutSet(repetitions: 0, weight: 0, rpe: 0, notes: _notesController.text.isEmpty ? null : _notesController.text));
                       _notesController.clear();
                       break;

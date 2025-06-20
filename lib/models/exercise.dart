@@ -77,4 +77,11 @@ class Exercise extends HiveObject {
 
   @override
   String toString() => name;
+}
+
+ExerciseType exerciseTypeFromString(String type) {
+  return ExerciseType.values.firstWhere(
+    (e) => e.toString().split('.').last == type,
+    orElse: () => ExerciseType.autre,
+  );
 } 

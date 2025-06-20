@@ -27,6 +27,11 @@ class ExercisesScreen extends ConsumerWidget {
           });
         }
 
+        final typeItems = ExerciseType.values.map((e) => DropdownMenuItem<ExerciseType>(
+          value: e,
+          child: Text(e.name, style: AppTextStyles.body(context)),
+        )).toList();
+
         return Scaffold(
           appBar: AppBar(
             title: Text(
@@ -68,21 +73,11 @@ class ExercisesScreen extends ConsumerWidget {
                         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colorScheme.primary, width: 1)),
                         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colorScheme.primary, width: 2)),
                       ),
-                      items: [null, ...ExerciseType.values].map((type) {
-                        if (type == null) {
-                          return DropdownMenuItem<ExerciseType>(
-                            value: null,
-                            child: Text('Tous les types', style: AppTextStyles.body(context)),
-                          );
-                        }
-                        return DropdownMenuItem<ExerciseType>(
-                          value: type,
-                          child: Text(type.name, style: AppTextStyles.body(context)),
-                        );
-                      }).toList(),
+                      items: typeItems,
                       onChanged: (value) {
-                        selectedType = value;
-                        filter();
+                        setState(() {
+                          selectedType = value!;
+                        });
                       },
                     ),
                   ],
@@ -118,134 +113,125 @@ class ExercisesScreen extends ConsumerWidget {
 
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Nouvel exercice',
-          style: AppTextStyles.title(context),
-        ),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Nom',
-                  labelStyle: AppTextStyles.label(context),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.white, width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.white, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.white, width: 1),
-                  ),
-                ),
-                style: AppTextStyles.input(context),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer un nom';
-                  }
-                  return null;
-                },
-                onSaved: (value) => name = value!,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Groupe musculaire',
-                  labelStyle: AppTextStyles.label(context),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.white, width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.white, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.white, width: 1),
-                  ),
-                ),
-                style: AppTextStyles.input(context),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer un groupe musculaire';
-                  }
-                  return null;
-                },
-                onSaved: (value) => muscleGroup = value!,
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<ExerciseType>(
-                value: type,
-                decoration: InputDecoration(
-                  labelText: 'Type',
-                  labelStyle: AppTextStyles.label(context),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.white, width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.white, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.white, width: 1),
-                  ),
-                ),
-                style: AppTextStyles.input(context),
-                items: ExerciseType.values.map((e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(_exerciseTypeToString(e)),
-                )).toList(),
-                onChanged: (value) {
-                  if (value != null) type = value;
-                },
-                validator: (value) {
-                  if (value == null) {
-                    return 'Veuillez sélectionner un type';
-                  }
-                  return null;
-                },
-              ),
-            ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text(
+            'Nouvel exercice',
+            style: AppTextStyles.title(context),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Annuler',
-              style: AppTextStyles.button(context),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  decoration: InputDecoration(
+                    labelText: 'Nom',
+                    labelStyle: AppTextStyles.label(context),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Colors.white, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Colors.white, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Colors.white, width: 1),
+                    ),
+                  ),
+                  style: AppTextStyles.input(context),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Veuillez entrer un nom';
+                    }
+                    return null;
+                  },
+                  onSaved: (value) => name = value!,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  decoration: InputDecoration(
+                    labelText: 'Groupe musculaire',
+                    labelStyle: AppTextStyles.label(context),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Colors.white, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Colors.white, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Colors.white, width: 1),
+                    ),
+                  ),
+                  style: AppTextStyles.input(context),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Veuillez entrer un groupe musculaire';
+                    }
+                    return null;
+                  },
+                  onSaved: (value) => muscleGroup = value!,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<ExerciseType>(
+                  value: type,
+                  items: ExerciseType.values.map((e) => DropdownMenuItem(
+                    value: e,
+                    child: Text(e.name),
+                  )).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        type = value;
+                      });
+                    }
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Type',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null) return 'Veuillez sélectionner un type';
+                    return null;
+                  },
+                ),
+              ],
             ),
           ),
-          FilledButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                formKey.currentState!.save();
-                ref.read(exerciseNotifierProvider.notifier).addExercise(
-                  Exercise(
-                    name: name,
-                    muscleGroup: muscleGroup,
-                    type: type,
-                  ),
-                );
-                Navigator.pop(context);
-              }
-            },
-            child: Text(
-              'Ajouter',
-              style: AppTextStyles.button(context),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Annuler',
+                style: AppTextStyles.button(context),
+              ),
             ),
-          ),
-        ],
+            FilledButton(
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  formKey.currentState!.save();
+                  ref.read(exerciseNotifierProvider.notifier).addExercise(
+                    Exercise(
+                      name: name,
+                      muscleGroup: muscleGroup,
+                      type: type,
+                    ),
+                  );
+                  Navigator.pop(context);
+                }
+              },
+              child: Text(
+                'Ajouter',
+                style: AppTextStyles.button(context),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -255,54 +241,73 @@ class ExercisesScreen extends ConsumerWidget {
     WidgetRef ref,
     Exercise exercise,
   ) async {
+    final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController(text: exercise.name);
     final muscleGroupController = TextEditingController(text: exercise.muscleGroup);
-    final typeController = TextEditingController(text: exercise.type.name);
+    ExerciseType type = exercise.type;
 
     return showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Modifier l\'exercice'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Nom'),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Modifier l\'exercice'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Nom'),
+                ),
+                TextField(
+                  controller: muscleGroupController,
+                  decoration: const InputDecoration(labelText: 'Groupe musculaire'),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<ExerciseType>(
+                  value: type,
+                  items: ExerciseType.values.map((e) => DropdownMenuItem(
+                    value: e,
+                    child: Text(e.name),
+                  )).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        type = value;
+                      });
+                    }
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Type',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
             ),
-            TextField(
-              controller: muscleGroupController,
-              decoration: const InputDecoration(labelText: 'Groupe musculaire'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annuler'),
             ),
-            TextField(
-              controller: typeController,
-              decoration: const InputDecoration(labelText: 'Type (force, cardio, etc.)'),
+            TextButton(
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  final updatedExercise = Exercise(
+                    id: exercise.id,
+                    name: nameController.text,
+                    muscleGroup: muscleGroupController.text,
+                    type: type,
+                  );
+                  ref.read(exerciseNotifierProvider.notifier).updateExercise(updatedExercise);
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Enregistrer'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty &&
-                  muscleGroupController.text.isNotEmpty &&
-                  typeController.text.isNotEmpty) {
-                final updatedExercise = Exercise(
-                  id: exercise.id,
-                  name: nameController.text,
-                  muscleGroup: muscleGroupController.text,
-                  type: ExerciseType.values.byName(typeController.text),
-                );
-                ref.read(exerciseNotifierProvider.notifier).updateExercise(updatedExercise);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Enregistrer'),
-          ),
-        ],
       ),
     );
   }
@@ -344,23 +349,6 @@ class ExercisesScreen extends ConsumerWidget {
 
     if (result == true) {
       ref.read(exerciseNotifierProvider.notifier).deleteExercise(exercise.id);
-    }
-  }
-
-  String _exerciseTypeToString(ExerciseType type) {
-    switch (type) {
-      case ExerciseType.force:
-        return 'Force';
-      case ExerciseType.cardio:
-        return 'Cardio';
-      case ExerciseType.hypertrophie:
-        return 'Hypertrophie';
-      case ExerciseType.endurance:
-        return 'Endurance';
-      case ExerciseType.hyrox:
-        return 'Hyrox';
-      case ExerciseType.autre:
-        return 'Autre';
     }
   }
 }

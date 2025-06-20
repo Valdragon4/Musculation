@@ -20,7 +20,11 @@ class ExerciseAdapter extends TypeAdapter<Exercise> {
       id: fields[0] as String?,
       name: fields[1] as String,
       muscleGroup: fields[2] as String,
-      type: fields[3] as ExerciseType,
+      type: fields[3] is ExerciseType
+          ? fields[3] as ExerciseType
+          : (fields[3] is String
+              ? exerciseTypeFromString(fields[3] as String)
+              : ExerciseType.autre),
     );
   }
 

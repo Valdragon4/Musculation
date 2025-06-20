@@ -5,6 +5,7 @@ import '../providers/visual_progress_provider.dart';
 import '../services/image_service.dart';
 import '../theme/text_styles.dart';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 class VisualProgressScreen extends ConsumerStatefulWidget {
   const VisualProgressScreen({super.key});
@@ -237,15 +238,9 @@ class _VisualProgressScreenState extends ConsumerState<VisualProgressScreen> {
                   aspectRatio: 1,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      File(imagePath),
+                    child: _buildImageWidget(
+                      imagePath,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        debugPrint('Erreur lors de l\'aperçu: $error');
-                        return const Center(
-                          child: Icon(Icons.image_not_supported, size: 48),
-                        );
-                      },
                     ),
                   ),
                 ),
@@ -437,8 +432,8 @@ class _VisualProgressScreenState extends ConsumerState<VisualProgressScreen> {
                       onTap: () => Navigator.of(context).pop(),
                       child: InteractiveViewer(
                         child: Center(
-                          child: Image.file(
-                            File(entry.mediaPath),
+                          child: _buildImageWidget(
+                            entry.mediaPath,
                             fit: BoxFit.contain,
                           ),
                         ),
@@ -449,10 +444,8 @@ class _VisualProgressScreenState extends ConsumerState<VisualProgressScreen> {
               },
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                child: Image.file(
-                  File(entry.mediaPath),
-                  width: double.infinity,
-                  height: 200,
+                child: _buildImageWidget(
+                  entry.mediaPath,
                   fit: BoxFit.cover,
                 ),
               ),
@@ -513,5 +506,23 @@ class _VisualProgressScreenState extends ConsumerState<VisualProgressScreen> {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  Widget _buildImageWidget(String mediaPath, {BoxFit fit = BoxFit.cover}) {
+    if (kIsWeb && mediaPath.startsWith('data:image/')) {
+      return Image.network(mediaPath, fit: fit, errorBuilder: (context, error, stackTrace) {
+        debugPrint('Erreur lors de l\'affichage web: $error');
+        return const Center(child: Icon(Icons.image_not_supported, size: 48));
+      });
+    } else {
+      return Image.file(
+        File(mediaPath),
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) {
+          debugPrint('Erreur lors de l\'affichage fichier: $error');
+          return const Center(child: Icon(Icons.image_not_supported, size: 48));
+        },
+      );
+    }
   }
 } 

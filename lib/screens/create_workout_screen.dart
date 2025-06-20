@@ -29,13 +29,13 @@ class _CreateWorkoutScreenState extends ConsumerState<CreateWorkoutScreen> {
   bool _hasUnsavedChanges = false;
   final _hyroxWeightTextController = TextEditingController();
 
-  String _setDescription(WorkoutSet set, ExerciseType type) {
+  String _setDescription(WorkoutSet set, String type) {
     List<String> parts = [];
     if (set.notes != null && set.notes!.startsWith('pause:')) {
       parts.add(set.notes!);
       return parts.join(' | ');
     }
-    if (type == ExerciseType.hyrox) {
+    if (type == ExerciseType.hyrox.toString()) {
       if (set.rpe != 0) parts.add('Distance: ${set.rpe} m');
       if (set.repetitions != 0) parts.add('Répétitions: ${set.repetitions}');
       if (set.notes != null && set.notes!.isNotEmpty) {
@@ -352,7 +352,7 @@ class _CreateWorkoutScreenState extends ConsumerState<CreateWorkoutScreen> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: Text(
-                        _setDescription(set, exercise.exercise.type),
+                        _setDescription(set, exercise.exercise.type.name),
                         style: AppTextStyles.body(context),
                       ),
                     ),
@@ -805,6 +805,11 @@ class ExerciseSelectionDialog extends ConsumerWidget {
           });
         }
 
+        final typeItems = ExerciseType.values.map((e) => DropdownMenuItem<ExerciseType>(
+          value: e,
+          child: Text(e.name),
+        )).toList();
+
         return Dialog(
           backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
           shape: RoundedRectangleBorder(
@@ -834,28 +839,14 @@ class ExerciseSelectionDialog extends ConsumerWidget {
                 const SizedBox(height: 8),
                 DropdownButtonFormField<ExerciseType>(
                   value: selectedType,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    hintText: 'Filtrer par type',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colorScheme.primary, width: 1)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colorScheme.primary, width: 1)),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colorScheme.primary, width: 2)),
-                  ),
-                  items: [null, ...ExerciseType.values].map((type) {
-                    if (type == null) {
-                      return DropdownMenuItem<ExerciseType>(
-                        value: null,
-                        child: Text('Tous les types', style: AppTextStyles.body(context)),
-                      );
-                    }
-                    return DropdownMenuItem<ExerciseType>(
-                      value: type,
-                      child: Text(type.name, style: AppTextStyles.body(context)),
-                    );
-                  }).toList(),
+                  items: ExerciseType.values.map((e) => DropdownMenuItem(
+                    value: e,
+                    child: Text(e.name),
+                  )).toList(),
                   onChanged: (value) {
-                    selectedType = value;
-                    filter();
+                    setState(() {
+                      selectedType = value!;
+                    });
                   },
                 ),
                 const SizedBox(height: 12),
@@ -944,7 +935,7 @@ class _SetCreationDialogState extends ConsumerState<SetCreationDialog> {
                   style: AppTextStyles.title(context),
                 ),
                 const SizedBox(height: 24),
-                ..._buildFieldsForType(widget.exercise.type),
+                ..._buildFieldsForType(widget.exercise.type.name),
                 const SizedBox(height: 16),
                 Container(
                   height: 1,
@@ -1036,7 +1027,7 @@ class _SetCreationDialogState extends ConsumerState<SetCreationDialog> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           child: ListTile(
                             title: Text('Série ${index + 1}', style: AppTextStyles.bodyBold(context)),
-                            subtitle: Text(_setDescription(set, widget.exercise.type)),
+                            subtitle: Text(_setDescription(set, widget.exercise.type.name)),
                             trailing: IconButton(
                               icon: const Icon(Icons.delete),
                               onPressed: () => setState(() => _sets.removeAt(index)),
@@ -1099,10 +1090,10 @@ class _SetCreationDialogState extends ConsumerState<SetCreationDialog> {
     );
   }
 
-  List<Widget> _buildFieldsForType(ExerciseType type) {
+  List<Widget> _buildFieldsForType(String type) {
     switch (type) {
-      case ExerciseType.force:
-      case ExerciseType.hypertrophie:
+      case 'force':
+      case 'hypertrophie':
         return [
           TextField(
             controller: _repsController,
@@ -1139,8 +1130,8 @@ class _SetCreationDialogState extends ConsumerState<SetCreationDialog> {
             maxLines: 3,
           ),
         ];
-      case ExerciseType.endurance:
-      case ExerciseType.cardio:
+      case 'endurance':
+      case 'cardio':
         return [
           TextField(
             controller: _distanceController,
@@ -1184,7 +1175,7 @@ class _SetCreationDialogState extends ConsumerState<SetCreationDialog> {
             maxLines: 3,
           ),
         ];
-      case ExerciseType.hyrox:
+      case 'hyrox':
         return [
           TextField(
             controller: _hyroxDistanceController,
@@ -1235,7 +1226,7 @@ class _SetCreationDialogState extends ConsumerState<SetCreationDialog> {
             maxLines: 3,
           ),
         ];
-      case ExerciseType.autre:
+      case 'autre':
         return [
           TextField(
             controller: _rpeController,
@@ -1259,15 +1250,16 @@ class _SetCreationDialogState extends ConsumerState<SetCreationDialog> {
           ),
         ];
     }
+    return [];
   }
 
-  String _setDescription(WorkoutSet set, ExerciseType type) {
+  String _setDescription(WorkoutSet set, String type) {
     List<String> parts = [];
     if (set.notes != null && set.notes!.startsWith('pause:')) {
       parts.add(set.notes!);
       return parts.join(' | ');
     }
-    if (type == ExerciseType.hyrox) {
+    if (type == ExerciseType.hyrox.toString()) {
       if (set.rpe != 0) parts.add('Distance: ${set.rpe} m');
       if (set.repetitions != 0) parts.add('Répétitions: ${set.repetitions}');
       if (set.notes != null && set.notes!.isNotEmpty) {

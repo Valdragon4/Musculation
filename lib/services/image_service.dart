@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
@@ -10,6 +11,10 @@ class ImageService {
 
   // Demande toutes les permissions nécessaires au démarrage
   Future<bool> requestInitialPermissions() async {
+    if (kIsWeb) {
+      // Pas de permissions nécessaires sur le web
+      return true;
+    }
     try {
       debugPrint('=== Début de la demande des permissions initiales ===');
       
@@ -28,8 +33,8 @@ class ImageService {
       final hasCamera = cameraStatus.isGranted;
       
       debugPrint('Résumé des permissions:');
-      debugPrint('- Photos: ${hasPhotos ? 'Accordée' : 'Refusée'}');
-      debugPrint('- Caméra: ${hasCamera ? 'Accordée' : 'Refusée'}');
+      debugPrint('- Photos: [32m${hasPhotos ? 'Accordée' : 'Refusée'}');
+      debugPrint('- Caméra: [32m${hasCamera ? 'Accordée' : 'Refusée'}');
       debugPrint('=== Fin de la demande des permissions ===');
       
       return hasPhotos && hasCamera;
@@ -85,29 +90,33 @@ class ImageService {
     }
   }
 
-  // Sauvegarder l'image dans le dossier de l'application
+  // Sauvegarder l'image dans le dossier de l'application ou en base64 sur le web
   Future<String?> _saveImage(XFile image) async {
     try {
-      debugPrint('Sauvegarde de l\'image: ${image.path}');
-      
-      // Obtenir le dossier de l'application
-      final appDir = await getApplicationDocumentsDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final extension = path.extension(image.path);
-      final fileName = '$timestamp$extension';
-      final destinationPath = path.join(appDir.path, fileName);
-      
-      debugPrint('Chemin de destination: $destinationPath');
-      
-      // Copier l'image
-      final File sourceFile = File(image.path);
-      if (await sourceFile.exists()) {
-        await sourceFile.copy(destinationPath);
-        debugPrint('Image sauvegardée avec succès');
-        return destinationPath;
+      debugPrint('Sauvegarde de l\'image: [32m${image.path}');
+      if (kIsWeb) {
+        // Sur le web, retourne le contenu de l'image en base64
+        final bytes = await image.readAsBytes();
+        final base64Str = base64Encode(bytes);
+        final ext = path.extension(image.path).replaceFirst('.', '');
+        return 'data:image/$ext;base64,$base64Str';
       } else {
-        debugPrint('Le fichier source n\'existe pas');
-        return null;
+        // Mobile/desktop : comportement actuel
+        final appDir = await getApplicationDocumentsDirectory();
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final extension = path.extension(image.path);
+        final fileName = '$timestamp$extension';
+        final destinationPath = path.join(appDir.path, fileName);
+
+        final File sourceFile = File(image.path);
+        if (await sourceFile.exists()) {
+          await sourceFile.copy(destinationPath);
+          debugPrint('Image sauvegardée avec succès');
+          return destinationPath;
+        } else {
+          debugPrint('Le fichier source n\'existe pas');
+          return null;
+        }
       }
     } catch (e) {
       debugPrint('Erreur lors de la sauvegarde de l\'image: $e');

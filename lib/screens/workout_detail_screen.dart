@@ -285,7 +285,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _getWorkoutTypeName(widget.workout.type),
+              _getWorkoutTypeName(widget.workout.type.toString().split('.').last),
               style: AppTextStyles.cardTitle(context),
             ),
             const SizedBox(height: 8),
@@ -353,7 +353,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: Text(
-                            _setDescription(set, exercise.exercise.type),
+                            _setDescription(set, exercise.exercise.type.name),
                             style: AppTextStyles.body(context),
                           ),
                         ),
@@ -493,19 +493,20 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     );
   }
 
-  String _getWorkoutTypeName(WorkoutType type) {
+  String _getWorkoutTypeName(String type) {
     switch (type) {
-      case WorkoutType.upperBody:
+      case 'upperBody':
         return 'Haut du corps';
-      case WorkoutType.lowerBody:
+      case 'lowerBody':
         return 'Bas du corps';
-      case WorkoutType.fullBody:
+      case 'fullBody':
         return 'Corps complet';
-      case WorkoutType.cardio:
+      case 'cardio':
         return 'Cardio';
-      case WorkoutType.other:
+      case 'other':
         return 'Autre';
     }
+    return '';
   }
 
   String _formatDate(DateTime date) {
@@ -674,11 +675,11 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     final hyroxWeightTextController = TextEditingController();
 
     // Pré-remplir les champs selon le type d'exercice
-    if (exercise.exercise.type == ExerciseType.cardio || exercise.exercise.type == ExerciseType.endurance) {
+    if (exercise.exercise.type == 'cardio' || exercise.exercise.type == 'endurance') {
       distanceController.text = set.weight.toString();
       timeController.text = set.repetitions.toString();
       speedController.text = ''; // La vitesse reste indépendante du RPE
-    } else if (exercise.exercise.type == ExerciseType.hyrox) {
+    } else if (exercise.exercise.type == 'hyrox') {
       hyroxDistanceController.text = set.rpe.toString();
       hyroxTimeController.text = set.repetitions.toString();
       hyroxWeightTextController.text = set.weight.toString();
@@ -694,7 +695,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: _buildFieldsForType(exercise.exercise.type, 
+            children: _buildFieldsForType(exercise.exercise.type.name, 
               repsController, weightController, rpeController, notesController,
               pauseController, distanceController, timeController, speedController,
               hyroxDistanceController, hyroxTimeController, hyroxWeightTextController),
@@ -712,14 +713,14 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
             onPressed: () {
               WorkoutSet newSet;
               
-              if (exercise.exercise.type == ExerciseType.cardio || exercise.exercise.type == ExerciseType.endurance) {
+              if (exercise.exercise.type == 'cardio' || exercise.exercise.type == 'endurance') {
                 newSet = WorkoutSet(
                   repetitions: int.tryParse(timeController.text) ?? 0,
                   weight: double.tryParse(distanceController.text) ?? 0,
                   rpe: int.tryParse(rpeController.text) ?? 0,
                   notes: notesController.text.isEmpty ? null : notesController.text,
                 );
-              } else if (exercise.exercise.type == ExerciseType.hyrox) {
+              } else if (exercise.exercise.type == 'hyrox') {
                 newSet = WorkoutSet(
                   repetitions: int.tryParse(hyroxTimeController.text) ?? 0,
                   weight: double.tryParse(hyroxWeightTextController.text) ?? 0,
@@ -761,7 +762,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   }
 
   List<Widget> _buildFieldsForType(
-    ExerciseType type,
+    String type,
     TextEditingController repsController,
     TextEditingController weightController,
     TextEditingController rpeController,
@@ -775,8 +776,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     TextEditingController hyroxWeightTextController,
   ) {
     switch (type) {
-      case ExerciseType.force:
-      case ExerciseType.hypertrophie:
+      case 'force':
+      case 'hypertrophie':
         return [
           TextField(
             controller: repsController,
@@ -813,8 +814,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
             maxLines: 3,
           ),
         ];
-      case ExerciseType.endurance:
-      case ExerciseType.cardio:
+      case 'endurance':
+      case 'cardio':
         return [
           TextField(
             controller: distanceController,
@@ -858,7 +859,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
             maxLines: 3,
           ),
         ];
-      case ExerciseType.hyrox:
+      case 'hyrox':
         return [
           TextField(
             controller: hyroxDistanceController,
@@ -909,7 +910,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
             maxLines: 3,
           ),
         ];
-      case ExerciseType.autre:
+      case 'autre':
         return [
           TextField(
             controller: rpeController,
@@ -933,6 +934,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
           ),
         ];
     }
+    return [];
   }
 
   void _removeSet(WorkoutExercise exercise, int setIndex) {
@@ -948,13 +950,13 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     });
   }
 
-  String _setDescription(WorkoutSet set, ExerciseType type) {
+  String _setDescription(WorkoutSet set, String type) {
     List<String> parts = [];
     if (set.notes != null && set.notes!.startsWith('pause:')) {
       parts.add(set.notes!);
       return parts.join(' | ');
     }
-    if (type == ExerciseType.hyrox) {
+    if (type == 'hyrox') {
       final already = <String, bool>{};
       if (set.rpe != 0) {
         parts.add('Distance: ${set.rpe} m');
@@ -979,7 +981,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
         }
       }
       return parts.join(' |\n');
-    } else if (type == ExerciseType.cardio || type == ExerciseType.endurance) {
+    } else if (type == 'cardio' || type == 'endurance') {
       if (set.weight != 0) parts.add('Distance: ${set.weight} km');
       if (set.repetitions != 0) parts.add('Temps: ${set.repetitions} min');
       if (set.rpe != 0) parts.add('Vitesse: ${set.rpe} km/h');

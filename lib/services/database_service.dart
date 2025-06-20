@@ -6,6 +6,7 @@ import '../models/cardio_entry.dart';
 import '../models/personal_record.dart';
 import '../models/visual_progress.dart';
 import '../models/daily_tracking.dart';
+import 'package:flutter/foundation.dart';
 
 class DatabaseService {
   static const String exercisesBoxName = 'exercises';
@@ -53,9 +54,109 @@ class DatabaseService {
     }
   }
 
+  static Future<void> migrateExercisesIfNeeded() async {
+    final box = Hive.box<Exercise>(exercisesBoxName);
+    final updatedKeys = <dynamic>[];
+
+    for (final key in box.keys) {
+      final exercise = box.get(key);
+
+      // Si le type est une String, on tente de le convertir
+      if (exercise != null && exercise.type is String) {
+        try {
+          final typeString = exercise.type as String;
+          // On suppose que l'enum s'appelle ExerciseType et que toString() donne 'ExerciseType.nom'
+          final ExerciseType newType = ExerciseType.values.firstWhere(
+            (e) => e.toString().split('.').last == typeString,
+            orElse: () => ExerciseType.autre, // Valeur par défaut si non trouvé
+          );
+
+          final newExercise = Exercise(
+            id: exercise.id,
+            name: exercise.name,
+            muscleGroup: exercise.muscleGroup,
+            type: newType,
+          );
+
+          await box.put(key, newExercise);
+          updatedKeys.add(key);
+        } catch (e) {
+          print('Erreur de migration pour l\'exercice $key : $e');
+        }
+      }
+    }
+    if (updatedKeys.isNotEmpty) {
+      print('Migration terminée pour les exercices : $updatedKeys');
+    }
+  }
+
+  // Migration brute pour la box 'exercises' (avant ouverture typée)
+  static Future<void> migrateExerciseBoxRaw() async {
+    var box = await Hive.openBox('exercises');
+    List<Map<String, dynamic>> rawExercises = [];
+
+    for (var key in box.keys) {
+      var raw = box.get(key);
+      if (raw is Exercise) {
+        rawExercises.add({
+          'id': raw.id,
+          'name': raw.name,
+          'muscleGroup': raw.muscleGroup,
+          'type': raw.type,
+        });
+      } else if (raw is Map) {
+        final typeString = raw['type'];
+        final ExerciseType newType = ExerciseType.values.firstWhere(
+          (e) => e.toString().split('.').last == typeString,
+          orElse: () => ExerciseType.autre,
+        );
+        rawExercises.add({
+          'id': raw['id'],
+          'name': raw['name'],
+          'muscleGroup': raw['muscleGroup'],
+          'type': newType,
+        });
+      }
+    }
+
+    await box.clear();
+
+    for (var ex in rawExercises) {
+      final exercise = Exercise(
+        id: ex['id'],
+        name: ex['name'],
+        muscleGroup: ex['muscleGroup'],
+        type: ex['type'],
+      );
+      await box.add(exercise);
+    }
+    print('Migration brute terminée !');
+  }
+
+  static Future<void> migrateStringTypeToEnumIfNeeded() async {
+    final box = Hive.box<Exercise>(exercisesBoxName);
+    for (final key in box.keys) {
+      final exercise = box.get(key);
+      if (exercise != null && exercise.type is String) {
+        final newType = exerciseTypeFromString(exercise.type as String);
+        final newExercise = Exercise(
+          id: exercise.id,
+          name: exercise.name,
+          muscleGroup: exercise.muscleGroup,
+          type: newType,
+        );
+        await box.put(key, newExercise);
+      }
+    }
+  }
+
   static Future<void> init() async {
-    final appDocumentDir = await getApplicationDocumentsDirectory();
-    await Hive.initFlutter(appDocumentDir.path);
+    if (kIsWeb) {
+      await Hive.initFlutter();
+    } else {
+      final appDocumentDir = await getApplicationDocumentsDirectory();
+      await Hive.initFlutter(appDocumentDir.path);
+    }
 
     // Enregistrer les adaptateurs dans l'ordre
     Hive.registerAdapter(ExerciseTypeAdapter());
@@ -70,8 +171,13 @@ class DatabaseService {
     Hive.registerAdapter(VisualProgressAdapter());
     Hive.registerAdapter(DailyTrackingAdapter());
 
+    // Migration brute AVANT ouverture typée
+    await migrateExerciseBoxRaw();
+    await Hive.box('exercises').close();
     // Ouvrir les boîtes
     await Hive.openBox<Exercise>(exercisesBoxName);
+    await migrateExercisesIfNeeded();
+    await migrateStringTypeToEnumIfNeeded();
     await Hive.openBox<Workout>(workoutsBoxName);
     await Hive.openBox<PersonalRecord>(personalRecordsBoxName);
     await Hive.openBox<VisualProgress>(visualProgressBoxName);
