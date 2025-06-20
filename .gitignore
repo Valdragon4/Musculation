@@ -32,7 +32,6 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
-
 # Symbolication related
 app.*.symbols
 
@@ -43,3 +42,37 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Additional build directories
+**/build/
+**/target/
+**/out/
+
+# Coverage reports
+coverage/
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+
+# Large files that shouldn't be in git
+*.so
+*.dll
+*.dylib
+*.exe
+*.bin
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Flutter specific large files
+**/libflutter.so
+**/libflutter.dylib
+**/flutter_assets/
+**/app.flx
+**/app.dill
+**/app-aot.dill
